@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx=".35" cy=".4" r=".9">
+      <stop offset="0" stop-color="#f7efdc"/>
+      <stop offset=".7" stop-color="#eadcbc"/>
+      <stop offset="1" stop-color="#d9c49a"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2b95e"/>
+      <stop offset="1" stop-color="#a87b2b"/>
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="150%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1152" height="582" rx="18" fill="none" stroke="#b8892f" stroke-opacity=".5" stroke-width="2"/>
+
+  <!-- brand -->
+  <path d="M100 118h22v28h25v21h-25v56h-22v-56H75v-21h25z" fill="url(#gold)"/>
+  <text x="170" y="210" font-family="Noto Serif" font-size="88" font-weight="700" fill="#3b2a1a">BibleFlip</text>
+  <text x="80" y="290" font-family="Noto Serif" font-size="40" fill="#6b5536">Live sermon transcription</text>
+  <text x="80" y="342" font-family="Noto Serif" font-size="40" fill="#6b5536">in your browser.</text>
+  <text x="80" y="440" font-family="Noto Serif" font-size="30" font-style="italic" fill="#8a6a2e">Say a verse. See it on screen.</text>
+  <g font-family="Noto Serif" font-size="22" fill="#7a6446">
+    <text x="80" y="530">Runs on your own server · No cloud speech API</text>
+  </g>
+
+  <!-- verse card, like the app's scripture panel -->
+  <rect x="664" y="164" width="456" height="330" rx="16" fill="#503714" fill-opacity=".22" filter="url(#blur)"/>
+  <rect x="660" y="150" width="460" height="330" rx="16" fill="#fbf6ea" stroke="#dccba6" stroke-width="1.5"/>
+  <rect x="660" y="150" width="8" height="330" rx="4" fill="url(#gold)"/>
+  <text x="700" y="210" font-family="Noto Serif" font-size="36" font-weight="700" fill="#3b2a1a">John 3:16</text>
+  <text x="900" y="208" font-family="Noto Serif" font-size="16" letter-spacing="3" fill="#8a7558">KJV</text>
+  <g font-family="Noto Serif" font-size="25" fill="#3b2a1a">
+    <text x="700" y="262"><tspan fill="#b8892f" font-size="16" font-weight="700" dy="-8">16</tspan><tspan dy="8"> For God so loved the world,</tspan></text>
+    <text x="700" y="300">that he gave his only begotten</text>
+    <text x="700" y="338">Son, that whosoever believeth</text>
+    <text x="700" y="376">in him should not perish, but</text>
+    <text x="700" y="414">have everlasting life.</text>
+  </g>
+  <text x="1086" y="458" text-anchor="end" font-family="Noto Serif" font-size="20" fill="#9a6f22">Read in NKJV ↗</text>
+
+  <!-- spoken-verse chips -->
+  <g font-family="Noto Serif" font-size="20" font-weight="700" fill="#3b2a1a">
+    <rect x="660" y="514" width="148" height="44" rx="22" fill="#fbf6ea" stroke="#d4b06a"/>
+    <text x="734" y="543" text-anchor="middle">Romans 8:28</text>
+    <rect x="818" y="514" width="112" height="44" rx="22" fill="#fbf6ea" stroke="#d4b06a"/>
+    <text x="874" y="543" text-anchor="middle">Psalm 23</text>
+    <rect x="940" y="514" width="180" height="44" rx="22" fill="#fbf6ea" stroke="#d4b06a"/>
+    <text x="1030" y="543" text-anchor="middle">Philippians 4:13</text>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a2a24"/>
+      <stop offset="1" stop-color="#5c1714"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0cf7a"/>
+      <stop offset="1" stop-color="#c08a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="28" y="28" width="456" height="456" rx="90" fill="none" stroke="#d4a64a" stroke-opacity=".55" stroke-width="6"/>
+  <!-- cross kept inside the central 60% so it survives maskable-icon cropping -->
+  <path d="M226 116h60v74h66v58h-66v148h-60V248h-66v-58h66z" fill="url(#gold)"/>
+</svg>

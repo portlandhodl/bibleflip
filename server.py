@@ -17,17 +17,21 @@ Protocol (per WebSocket connection at /ws):
 
 import argparse
 import asyncio
+import html
 import json
 import logging
+import mimetypes
+import os
 import queue
+import re
 import socket
 import threading
 from pathlib import Path
 
 import numpy as np
 import uvicorn
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from moonshine_voice import ModelArch, get_model_for_language
 from moonshine_voice.transcriber import (
@@ -49,7 +53,11 @@ STATIC_DIR = Path(__file__).parent / "static"
 # Public-domain King James Version: {"John": [[verse, ...] per chapter], ...}.
 # NKJV text is copyrighted, so the UI links out to it instead of hosting it.
 BIBLE = json.loads((Path(__file__).parent / "data" / "kjv.json").read_text(encoding="utf-8"))
+INDEX_HTML = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+HOST_RE = re.compile(r"[A-Za-z0-9.\-]+(:\d+)?|\[[0-9A-Fa-f:]+\](:\d+)?")
 STOP = object()  # sentinel placed on the audio queue to flush and end a session
+
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -65,8 +73,21 @@ session_slots: asyncio.Semaphore | None = None
 # simultaneous talkers use --model small (~1.5s median lag at 4 talkers).
 
 @app.get("/")
-async def index():
-    return FileResponse(STATIC_DIR / "index.html")
+async def index(request: Request):
+    # og:image and friends need absolute URLs. PUBLIC_URL wins; otherwise use the
+    # Host and X-Forwarded-Proto headers a reverse proxy passes through.
+    base = os.environ.get("PUBLIC_URL", "").rstrip("/")
+    if not base:
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme).split(",")[0].strip()
+        host = request.headers.get("host", "")
+        if proto in ("http", "https") and HOST_RE.fullmatch(host):
+            base = f"{proto}://{host}"
+    return HTMLResponse(INDEX_HTML.replace("__BASE_URL__", html.escape(base)))
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(STATIC_DIR / "favicon.ico")
 
 
 @app.get("/healthz")

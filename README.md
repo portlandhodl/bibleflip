@@ -47,7 +47,11 @@ docker compose up -d --build   # serves plain HTTP on 127.0.0.1:8094
 The image bakes in the medium and small models, so it starts without downloading them.
 Put a TLS-terminating reverse proxy in front, because browsers need HTTPS for the
 microphone. `deploy/nginx.conf.example` proxies the page and the `/ws` WebSocket. Pass
-different flags with `command:` in `compose.yaml`. Don't add `cpus:` limits: the runtime starts one thread per physical core,
+different flags with `command:` in `compose.yaml`.
+
+Link previews (Open Graph and Twitter cards) need absolute URLs, so the server builds them
+from the `Host` and `X-Forwarded-Proto` headers the proxy sends. To pin them instead, set
+`PUBLIC_URL=https://your.domain` in the container's environment. Don't add `cpus:` limits: the runtime starts one thread per physical core,
 and a CPU quota throttles those threads. Measured on this server, the container matches
 native lag (1 talker: ~0.8 s median; 4 talkers on medium: ~4-8 s median).
 
@@ -93,6 +97,8 @@ copyrighted and can't be redistributed. Detection runs on finished lines in
   `Transcriber`/`Stream` on a dedicated thread.
 - `static/`: web UI (`index.html`, `app.js`, `pcm-worklet.js`, `verses.js`). No build step.
 - `data/kjv.json`: KJV text served by `/api/passage` (see `data/README.md`).
+- `assets/`: SVG sources for the icons and the 1200×630 link-preview image. Run
+  `assets/make-images.sh` after editing them (needs librsvg, ImageMagick, Noto Serif).
 - `tests/verses.test.js`: reference-detection tests (`node tests/verses.test.js`).
 - `Dockerfile`, `compose.yaml`, `deploy/nginx.conf.example`: container and reverse-proxy setup.
 - `vendor/moonshine`: upstream [moonshine-ai/moonshine](https://github.com/moonshine-ai/moonshine)
