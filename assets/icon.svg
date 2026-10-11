@@ -11,6 +11,6 @@
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <rect x="28" y="28" width="456" height="456" rx="90" fill="none" stroke="#d4a64a" stroke-opacity=".55" stroke-width="6"/>
-  <!-- cross kept inside the central 60% so it survives maskable-icon cropping -->
+  <!-- cross kept inside the central 60% so it survives rounded-corner cropping -->
   <path d="M226 116h60v74h66v58h-66v148h-60V248h-66v-58h66z" fill="url(#gold)"/>
 </svg>

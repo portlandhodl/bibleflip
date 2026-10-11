@@ -20,7 +20,6 @@ import asyncio
 import html
 import json
 import logging
-import mimetypes
 import os
 import queue
 import re
@@ -56,8 +55,6 @@ BIBLE = json.loads((Path(__file__).parent / "data" / "kjv.json").read_text(encod
 INDEX_HTML = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
 HOST_RE = re.compile(r"[A-Za-z0-9.\-]+(:\d+)?|\[[0-9A-Fa-f:]+\](:\d+)?")
 STOP = object()  # sentinel placed on the audio queue to flush and end a session
-
-mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
