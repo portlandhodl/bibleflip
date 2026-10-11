@@ -1,0 +1,4 @@
+[submodule "vendor/moonshine"]
+	path = vendor/moonshine
+	url = https://github.com/moonshine-ai/moonshine.git
+	shallow = true

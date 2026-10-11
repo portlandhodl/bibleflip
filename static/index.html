@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>BibleFlip · Live Sermon Transcription</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #eee4cf; --panel: #fbf6ea; --text: #3b2a1a; --muted: #8a7558;
+      --accent: #9a6f22; --live: #7a1f1f; --border: #dccba6; --gold: #b8892f;
+      --shadow: 0 1px 2px rgba(80, 55, 20, .08), 0 6px 20px rgba(80, 55, 20, .10);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1a130d; --panel: #251a12; --text: #efe3c8; --muted: #a8977a;
+              --accent: #d4a64a; --live: #b5443f; --border: #3d2c1e; --gold: #d4a64a;
+              --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .35); }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      font: 18px/1.55 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    }
+    header { width: 100%; max-width: 1120px; display: flex; align-items: baseline;
+             justify-content: space-between; padding: 20px 0 12px;
+             border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    h1 { font-size: 24px; margin: 0; font-weight: 600; letter-spacing: .02em; }
+    h1 .cross { color: var(--gold); margin-right: 8px; }
+    #status { color: var(--muted); font-size: 15px; font-style: italic; }
+    main { width: 100%; max-width: 1120px; flex: 1; display: grid;
+           grid-template-columns: 270px 1fr; gap: 16px; min-height: 50vh; }
+    @media (max-width: 720px) { main { grid-template-columns: 1fr; } #verse-panel { max-height: 30vh; } }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+             box-shadow: var(--shadow); }
+    #verse-panel { display: flex; flex-direction: column; overflow: hidden; }
+    #verse-panel .head { display: flex; justify-content: space-between; align-items: center;
+                         padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+    h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: .14em;
+         color: var(--accent); font-weight: 600; }
+    #verse-list { list-style: none; margin: 0; padding: 8px; overflow-y: auto; flex: 1; }
+    #verse-list li.placeholder { color: var(--muted); font-style: italic; font-size: 15px; padding: 8px; }
+    #verse-list li { display: flex; align-items: center; gap: 4px; border-radius: 8px; }
+    #verse-list li:hover, #verse-list li.current { background: color-mix(in srgb, var(--gold) 14%, transparent); }
+    #verse-list .ref { flex: 1; display: flex; justify-content: space-between; align-items: baseline;
+                       gap: 8px; border: none; background: none; text-align: left; padding: 9px 10px;
+                       font-size: 17px; font-weight: 600; color: var(--text); }
+    #verse-list .time { color: var(--muted); font-size: 13px; font-weight: normal; }
+    #verse-list .out { color: var(--gold); text-decoration: none; padding: 6px 10px; }
+    #verse-list li.fresh { animation: glow 2.5s ease-out; }
+    @keyframes glow { from { background: color-mix(in srgb, var(--gold) 35%, transparent); } }
+    #scripture { width: 100%; max-width: 1120px; margin-bottom: 16px; padding: 16px 22px 18px;
+                 border-left: 5px solid var(--gold); animation: fade-in .3s ease-out; }
+    #scripture[hidden] { display: none; }
+    #scripture .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    #scripture-ref { font-size: 22px; text-transform: none; letter-spacing: normal; color: var(--text); }
+    #scripture .translation { color: var(--muted); font-size: 13px; letter-spacing: .12em; }
+    #scripture-link { margin-left: auto; color: var(--accent); font-size: 15px; text-decoration: none; }
+    #scripture-text { font-size: 21px; line-height: 1.6; max-height: 28vh; overflow-y: auto; }
+    #scripture-text sup { color: var(--gold); font-size: 12px; font-weight: 600; margin: 0 3px 0 6px; }
+    #scripture-text .error { color: var(--muted); font-style: italic; font-size: 17px; }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } }
+    #transcript { overflow-y: auto; padding: 22px 26px; font-size: 21px;
+                  border-top: 3px solid var(--gold); }
+    #transcript p { margin: 0 0 12px; }
+    #transcript .partial { color: var(--muted); font-style: italic; }
+    #transcript .placeholder { color: var(--muted); font-style: italic; }
+    .controls { width: 100%; max-width: 1120px; display: flex; gap: 12px;
+                align-items: center; padding: 18px 0 24px; }
+    button {
+      font: inherit; font-size: 16px; border: 1px solid var(--border); background: var(--panel);
+      color: var(--text); border-radius: 10px; padding: 9px 16px; cursor: pointer;
+    }
+    button.small { font-size: 13px; padding: 3px 10px; border-radius: 7px; }
+    #mic {
+      background: var(--accent); color: #fffaf0; border: none; font-weight: 600;
+      padding: 14px 28px; border-radius: 999px; min-width: 170px; letter-spacing: .03em;
+    }
+    #mic.live { background: var(--live); }
+    #mic:disabled { opacity: .6; cursor: default; }
+    #meter { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    #level { height: 100%; width: 0; background: var(--gold); transition: width 80ms linear; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span class="cross">&#10013;</span>Live Sermon Transcription</h1>
+    <span id="status">Idle</span>
+  </header>
+
+  <section id="scripture" class="panel" aria-live="polite" hidden>
+    <div class="head">
+      <h2 id="scripture-ref"></h2>
+      <span class="translation">KJV</span>
+      <a id="scripture-link" target="_blank" rel="noopener">Read in NKJV &#8599;</a>
+    </div>
+    <div id="scripture-text"></div>
+  </section>
+
+  <main>
+    <aside id="verse-panel" class="panel">
+      <div class="head">
+        <h2>Verses</h2>
+        <button id="clear-verses" class="small">Clear</button>
+      </div>
+      <ol id="verse-list">
+        <li class="placeholder">Say a reference like &ldquo;John 3:16&rdquo; and it appears here.</li>
+      </ol>
+    </aside>
+
+    <div id="transcript" class="panel" aria-live="polite">
+      <p class="placeholder">Press <b>Start talking</b> and speak English. Text appears as you speak.</p>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button id="mic">Start talking</button>
+    <div id="meter"><div id="level"></div></div>
+    <button id="copy">Copy</button>
+    <button id="clear">Clear</button>
+  </div>
+
+  <script src="/static/verses.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

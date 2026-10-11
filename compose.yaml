@@ -1,0 +1,14 @@
+services:
+  bibleflip:
+    build: .
+    image: bibleflip-stt
+    container_name: bibleflip
+    restart: unless-stopped
+    init: true
+    # Only the reverse proxy on this host talks to it; see deploy/nginx.conf.example.
+    ports:
+      - "127.0.0.1:8094:8000"
+    # Same flags as ./run.sh, e.g. ["--model", "small", "--max-sessions", "8"].
+    command: ["--model", "medium", "--max-sessions", "4"]
+    # No cpus/cpuset limits on purpose: the native runtime starts one worker thread per
+    # physical core, and a CFS quota would throttle those threads and add lag.
