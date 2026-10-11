@@ -41,6 +41,15 @@ const single = [
   ["mark 2 of them", []],
   ["Genesis 51", []],
   ["John", []],
+  ["And some 119 verse 105.", ["Psalm 119:105"]],
+  ["sam 23:1", ["Psalm 23:1"]],
+  ["look 2 verse 10", ["Luke 2:10"]],
+  ["Mathew 5:3", ["Matthew 5:3"]],
+  ["Roman 8:28", ["Romans 8:28"]],
+  ["some 5 people came", []],
+  ["some 119", []],
+  ["look 2 of them", []],
+  ["I spent some 3 verses on that", []],
 ];
 for (const [text, want] of single) check(JSON.stringify(text), V.findVerseRefs(text).map((r) => r.ref), want);
 

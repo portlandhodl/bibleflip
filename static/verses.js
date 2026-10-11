@@ -16,8 +16,8 @@ const BOOKS = [
   ["Obadiah", 1], ["Jonah", 4], ["Micah", 7], ["Nahum", 3],
   ["Habakkuk", 3, "habakuk", "habbakuk"], ["Zephaniah", 3], ["Haggai", 2],
   ["Zechariah", 14, "zachariah"], ["Malachi", 4],
-  ["Matthew", 28], ["Mark", 16], ["Luke", 24], ["John", 21],
-  ["Acts", 28, "acts of the apostles"], ["Romans", 16], ["1 Corinthians", 16, "corinthian"],
+  ["Matthew", 28, "mathew"], ["Mark", 16], ["Luke", 24], ["John", 21],
+  ["Acts", 28, "acts of the apostles"], ["Romans", 16, "roman"], ["1 Corinthians", 16, "corinthian"],
   ["2 Corinthians", 13, "corinthian"], ["Galatians", 6, "galations"], ["Ephesians", 6],
   ["Philippians", 4, "phillipians", "philipians"], ["Colossians", 4],
   ["1 Thessalonians", 5, "thessalonian"], ["2 Thessalonians", 3, "thessalonian"],
@@ -30,6 +30,11 @@ const BOOKS = [
 // These need a clear reference marker (chapter/verse/colon) or a capitalized name
 // followed by both chapter and verse.
 const AMBIGUOUS = new Set(["Numbers", "Job", "Mark", "Acts", "James", "Ruth", "Jude", "Titus"]);
+
+// What speech recognition writes when it mishears a book name ("Psalm 119 verse 105"
+// comes out as "some 119 verse 105"). These are everyday words, so they only count
+// when followed by chapter and an explicit verse ("119 verse 105", "119:105").
+const SOUNDALIKES = { Psalm: ["some", "sam", "salm", "palm"], Luke: ["look"] };
 
 const ORDINALS = {
   1: ["1", "1st", "first", "one", "i"],
@@ -51,6 +56,10 @@ for (const [name, chapters, ...aliases] of BOOKS) {
       BOOK_PATTERNS.push({ words, book });
     }
   }
+}
+for (const [name, words] of Object.entries(SOUNDALIKES)) {
+  const book = BOOK_PATTERNS.find((p) => p.book.name === name).book;
+  for (const w of words) BOOK_PATTERNS.push({ words: [w], book, soundalike: true });
 }
 BOOK_PATTERNS.sort((a, b) => b.words.length - a.words.length); // longest match first
 
@@ -142,7 +151,9 @@ function skipFillers(tokens, j) {
 
 function matchBook(tokens, i) {
   for (const p of BOOK_PATTERNS) {
-    if (p.words.every((w, k) => tokens[i + k] === w)) return { book: p.book, end: i + p.words.length };
+    if (p.words.every((w, k) => tokens[i + k] === w)) {
+      return { book: p.book, end: i + p.words.length, soundalike: !!p.soundalike };
+    }
   }
   return null;
 }
@@ -209,6 +220,7 @@ function matchBookFirst(tokens, caps, i) {
 
   const capitalized = caps[b.end - 1];
   const hasVerse = verse !== null || book.chapters === 1;
+  if (b.soundalike && !(verseMarked && verse !== null)) return null;
   if (AMBIGUOUS.has(book.name) && !marked && !(capitalized && hasVerse)) return null;
   return build(book, ch[0], verse, verseEnd, i, j);
 }

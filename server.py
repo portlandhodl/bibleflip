@@ -134,14 +134,15 @@ def run_transcriber(audio_q: queue.Queue, emit) -> None:
                 emit(
                     {
                         "type": "final",
-                        "id": event.line.line_id,
+                        # 64-bit ids lose precision as JS numbers, so send strings.
+                        "id": str(event.line.line_id),
                         "text": text,
                         "start": round(event.line.start_time, 2),
                         "duration": round(event.line.duration, 2),
                     }
                 )
         elif isinstance(event, LineTextChanged) and not event.line.is_complete:
-            emit({"type": "partial", "id": event.line.line_id, "text": event.line.text})
+            emit({"type": "partial", "id": str(event.line.line_id), "text": event.line.text})
 
     stream.add_listener(on_event)
     try:

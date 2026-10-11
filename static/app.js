@@ -6,6 +6,8 @@ const transcriptEl = document.getElementById("transcript");
 const levelEl = document.getElementById("level");
 const verseListEl = document.getElementById("verse-list");
 const scriptureEl = document.getElementById("scripture");
+const timerEl = document.getElementById("timer");
+const jumpLiveEl = document.getElementById("jump-live");
 
 let session = null; // { ws, ctx, media, source, node }
 const lineEls = new Map(); // line id -> <p>
@@ -15,6 +17,8 @@ let shownRef = null; // reference currently in the scripture panel
 let passageRequest = 0; // bumped per showPassage() so stale fetches are dropped
 const verseTracker = new VerseTracker();
 const passageCache = new Map(); // ref -> verses from /api/passage
+let timer = null; // interval updating the elapsed-time display while recording
+let wakeLock = null; // keeps phones from sleeping (and cutting the mic) mid-sermon
 
 // Lets the detector reject verses that don't exist ("John 3:45").
 fetch("/api/verse-counts").then((res) => res.json()).then(setVerseCounts).catch(() => {});
@@ -34,12 +38,65 @@ function lineElement(id) {
   return el;
 }
 
+// Follows the live text unless the reader has scrolled up to look at something;
+// then a "Live" button offers the way back.
+function nearBottom() {
+  return transcriptEl.scrollHeight - transcriptEl.scrollTop - transcriptEl.clientHeight < 60;
+}
+
+function scrollToLive() {
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  jumpLiveEl.hidden = true;
+}
+
 function showLine(id, text, isFinal) {
+  const follow = nearBottom();
   const el = lineElement(id);
   el.textContent = text;
   el.className = isFinal ? "final" : "partial";
-  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  if (follow) scrollToLive();
+  else jumpLiveEl.hidden = false;
 }
+
+transcriptEl.addEventListener("scroll", () => {
+  if (nearBottom()) jumpLiveEl.hidden = true;
+});
+jumpLiveEl.addEventListener("click", scrollToLive);
+
+function setRecording(on) {
+  document.body.classList.toggle("recording", on);
+  micButton.querySelector(".label").textContent = on ? "Stop" : "Start";
+  micButton.setAttribute("aria-label", on ? "Stop recording" : "Start recording");
+  clearInterval(timer);
+  if (on) {
+    const started = Date.now();
+    const tick = () => {
+      const s = Math.floor((Date.now() - started) / 1000);
+      const h = Math.floor(s / 3600);
+      const mm = String(Math.floor(s / 60) % 60).padStart(h ? 2 : 1, "0");
+      timerEl.textContent = (h ? h + ":" : "") + mm + ":" + String(s % 60).padStart(2, "0");
+    };
+    tick();
+    timer = setInterval(tick, 1000);
+    keepAwake();
+  } else {
+    wakeLock?.release().catch(() => {});
+    wakeLock = null;
+  }
+}
+
+async function keepAwake() {
+  try {
+    wakeLock = await navigator.wakeLock?.request("screen");
+  } catch {
+    // Not supported or refused (e.g. low battery); recording still works.
+  }
+}
+
+// The browser drops the wake lock when the page is hidden; take it back on return.
+document.addEventListener("visibilitychange", () => {
+  if (session && document.visibilityState === "visible") keepAwake();
+});
 
 function handleMessage(msg) {
   switch (msg.type) {
@@ -106,6 +163,7 @@ function addVerse(v) {
   void li.offsetWidth; // restart the highlight animation
   li.classList.add("fresh");
   verseListEl.prepend(li);
+  verseListEl.scrollTo({ left: 0, top: 0, behavior: "smooth" });
   showPassage(v);
 }
 
@@ -185,8 +243,7 @@ async function start() {
   ws.onclose = () => {
     teardownAudio();
     session = null;
-    micButton.textContent = "Start talking";
-    micButton.classList.remove("live");
+    setRecording(false);
     micButton.disabled = false;
     if (!statusEl.textContent.startsWith("Error")) setStatus("Idle");
   };
@@ -200,8 +257,7 @@ async function start() {
     if (ws.readyState === WebSocket.OPEN) ws.send(samples.buffer);
   };
 
-  micButton.textContent = "Stop";
-  micButton.classList.add("live");
+  setRecording(true);
   micButton.disabled = false;
 }
 
@@ -229,8 +285,16 @@ function stop() {
 micButton.addEventListener("click", () => (session ? stop() : start()));
 
 document.getElementById("clear").addEventListener("click", () => {
+  if (lineEls.size && !confirm("Clear the transcript?")) return;
   lineEls.clear();
   transcriptEl.innerHTML = "";
+  jumpLiveEl.hidden = true;
+});
+
+document.getElementById("scripture-close").addEventListener("click", () => {
+  scriptureEl.hidden = true;
+  shownRef = null;
+  for (const li of verseEls.values()) li.classList.remove("current");
 });
 
 document.getElementById("clear-verses").addEventListener("click", () => {

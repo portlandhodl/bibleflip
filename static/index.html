@@ -37,92 +37,170 @@
     :root {
       color-scheme: light dark;
       --bg: #eee4cf; --panel: #fbf6ea; --text: #3b2a1a; --muted: #8a7558;
-      --accent: #9a6f22; --live: #7a1f1f; --border: #dccba6; --gold: #b8892f;
+      --accent: #9a6f22; --live: #a3261f; --border: #dccba6; --gold: #b8892f;
+      --bar: rgba(251, 246, 234, .92);
       --shadow: 0 1px 2px rgba(80, 55, 20, .08), 0 6px 20px rgba(80, 55, 20, .10);
+      --gap: 14px;
     }
     @media (prefers-color-scheme: dark) {
       :root { --bg: #1a130d; --panel: #251a12; --text: #efe3c8; --muted: #a8977a;
-              --accent: #d4a64a; --live: #b5443f; --border: #3d2c1e; --gold: #d4a64a;
+              --accent: #d4a64a; --live: #c9473f; --border: #3d2c1e; --gold: #d4a64a;
+              --bar: rgba(37, 26, 18, .92);
               --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .35); }
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    /* One screen: the page never scrolls; only the transcript and verse text do. */
     body {
-      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      margin: 0; height: 100dvh; overflow: hidden; overscroll-behavior: none;
+      background: var(--bg); color: var(--text);
       font: 18px/1.55 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-      display: flex; flex-direction: column; align-items: center;
-      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+      display: flex; flex-direction: column; align-items: center; gap: var(--gap);
+      padding: calc(env(safe-area-inset-top) + 12px) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+      -webkit-tap-highlight-color: transparent;
     }
-    header { width: 100%; max-width: 1120px; display: flex; align-items: baseline;
-             justify-content: space-between; padding: 20px 0 12px;
-             border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-    h1 { font-size: 24px; margin: 0; font-weight: 600; letter-spacing: .02em; }
-    h1 .cross { color: var(--gold); margin-right: 8px; }
-    #status { color: var(--muted); font-size: 15px; font-style: italic; }
-    main { width: 100%; max-width: 1120px; flex: 1; display: grid;
-           grid-template-columns: 270px 1fr; gap: 16px; min-height: 50vh; }
-    @media (max-width: 720px) { main { grid-template-columns: 1fr; } #verse-panel { max-height: 30vh; } }
-    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-             box-shadow: var(--shadow); }
-    #verse-panel { display: flex; flex-direction: column; overflow: hidden; }
+    body > * { width: 100%; max-width: 1120px; }
+    button { font: inherit; color: var(--text); cursor: pointer; touch-action: manipulation; }
+
+    header { display: flex; align-items: baseline; gap: 10px; flex: none; }
+    h1 { font-size: 24px; margin: 0; font-weight: 700; letter-spacing: .01em; }
+    h1 .cross { color: var(--gold); margin-right: 6px; }
+    header .subtitle { color: var(--muted); font-style: italic; font-size: 16px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+    h2 { font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); font-weight: 600; }
+
+    /* Scripture panel: the verse that was just spoken */
+    #scripture { flex: 0 1 auto; max-height: 34dvh; display: flex; flex-direction: column;
+                 padding: 14px 18px 14px 20px; border-left: 5px solid var(--gold); animation: fade-in .3s ease-out; }
+    #scripture[hidden] { display: none; }
+    #scripture .head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex: none; }
+    #scripture-ref { font-size: 22px; text-transform: none; letter-spacing: normal; color: var(--text); font-weight: 700; }
+    #scripture .translation { color: var(--muted); font-size: 12px; letter-spacing: .12em; }
+    #scripture-link { margin-left: auto; color: var(--accent); font-size: 15px; text-decoration: none; white-space: nowrap; }
+    .icon-btn { border: none; background: none; padding: 6px; line-height: 0; color: var(--muted); border-radius: 8px; }
+    .icon-btn svg { width: 22px; height: 22px; }
+    #scripture-text { font-size: 20px; line-height: 1.55; overflow-y: auto; min-height: 0; }
+    #scripture-text sup { color: var(--gold); font-size: 12px; font-weight: 700; margin: 0 3px 0 6px; }
+    #scripture-text .error { color: var(--muted); font-style: italic; font-size: 16px; }
+
+    /* Desktop: verse list on the left, transcript on the right */
+    main { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: var(--gap); }
+    #verse-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
     #verse-panel .head { display: flex; justify-content: space-between; align-items: center;
-                         padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
-    h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: .14em;
-         color: var(--accent); font-weight: 600; }
+                         padding: 12px 14px 10px 16px; border-bottom: 1px solid var(--border); }
+    .small { font-size: 13px; padding: 3px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--panel); }
     #verse-list { list-style: none; margin: 0; padding: 8px; overflow-y: auto; flex: 1; }
     #verse-list li.placeholder { color: var(--muted); font-style: italic; font-size: 15px; padding: 8px; }
-    #verse-list li { display: flex; align-items: center; gap: 4px; border-radius: 8px; }
-    #verse-list li:hover, #verse-list li.current { background: color-mix(in srgb, var(--gold) 14%, transparent); }
-    #verse-list .ref { flex: 1; display: flex; justify-content: space-between; align-items: baseline;
-                       gap: 8px; border: none; background: none; text-align: left; padding: 9px 10px;
-                       font-size: 17px; font-weight: 600; color: var(--text); }
-    #verse-list .time { color: var(--muted); font-size: 13px; font-weight: normal; }
+    #verse-list li { display: flex; align-items: center; gap: 4px; border-radius: 9px; }
+    #verse-list li:hover, #verse-list li.current { background: color-mix(in srgb, var(--gold) 16%, transparent); }
+    #verse-list .ref { flex: 1; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+                       border: none; background: none; text-align: left; padding: 9px 10px; font-size: 17px; font-weight: 700; }
+    #verse-list .time { color: var(--muted); font-size: 13px; font-weight: normal; white-space: nowrap; }
     #verse-list .out { color: var(--gold); text-decoration: none; padding: 6px 10px; }
     #verse-list li.fresh { animation: glow 2.5s ease-out; }
-    @keyframes glow { from { background: color-mix(in srgb, var(--gold) 35%, transparent); } }
-    #scripture { width: 100%; max-width: 1120px; margin-bottom: 16px; padding: 16px 22px 18px;
-                 border-left: 5px solid var(--gold); animation: fade-in .3s ease-out; }
-    #scripture[hidden] { display: none; }
-    #scripture .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-    #scripture-ref { font-size: 22px; text-transform: none; letter-spacing: normal; color: var(--text); }
-    #scripture .translation { color: var(--muted); font-size: 13px; letter-spacing: .12em; }
-    #scripture-link { margin-left: auto; color: var(--accent); font-size: 15px; text-decoration: none; }
-    #scripture-text { font-size: 21px; line-height: 1.6; max-height: 28vh; overflow-y: auto; }
-    #scripture-text sup { color: var(--gold); font-size: 12px; font-weight: 600; margin: 0 3px 0 6px; }
-    #scripture-text .error { color: var(--muted); font-style: italic; font-size: 17px; }
-    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } }
-    #transcript { overflow-y: auto; padding: 22px 26px; font-size: 21px;
-                  border-top: 3px solid var(--gold); }
+
+    .transcript-wrap { position: relative; min-height: 0; display: flex; }
+    #transcript { flex: 1; overflow-y: auto; padding: 18px 22px; font-size: 21px; border-top: 3px solid var(--gold);
+                  overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     #transcript p { margin: 0 0 12px; }
     #transcript .partial { color: var(--muted); font-style: italic; }
     #transcript .placeholder { color: var(--muted); font-style: italic; }
-    .controls { width: 100%; max-width: 1120px; display: flex; gap: 12px;
-                align-items: center; padding: 18px 0 24px; }
-    button {
-      font: inherit; font-size: 16px; border: 1px solid var(--border); background: var(--panel);
-      color: var(--text); border-radius: 10px; padding: 9px 16px; cursor: pointer;
-    }
-    button.small { font-size: 13px; padding: 3px 10px; border-radius: 7px; }
-    #mic {
-      background: var(--accent); color: #fffaf0; border: none; font-weight: 600;
-      padding: 14px 28px; border-radius: 999px; min-width: 170px; letter-spacing: .03em;
-    }
-    #mic.live { background: var(--live); }
+    #jump-live { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+                 border: 1px solid var(--gold); background: var(--panel); color: var(--accent);
+                 border-radius: 999px; padding: 6px 16px; font-size: 15px; box-shadow: var(--shadow); }
+    #jump-live[hidden] { display: none; }
+
+    /* Recording bar, always visible at the bottom */
+    .controls { flex: none; display: flex; align-items: center; gap: 14px;
+                padding: 12px 0 calc(env(safe-area-inset-bottom) + 14px); }
+    #mic { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+           background: var(--accent); color: #fffaf0; border: none; font-weight: 700; font-size: 17px;
+           height: 56px; padding: 0 26px; border-radius: 999px; min-width: 168px; letter-spacing: .02em;
+           box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
+    #mic svg { width: 22px; height: 22px; flex: none; }
+    #mic .when-live { display: none; }
+    body.recording #mic { background: var(--live); box-shadow: 0 4px 14px color-mix(in srgb, var(--live) 40%, transparent); }
+    body.recording #mic .when-idle { display: none; }
+    body.recording #mic .when-live { display: inline; }
     #mic:disabled { opacity: .6; cursor: default; }
-    #meter { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .rec-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+    .rec-row { display: flex; align-items: center; gap: 8px; font-size: 15px; white-space: nowrap; }
+    .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); flex: none; }
+    body.recording .rec-dot { background: var(--live); animation: pulse 1.4s ease-in-out infinite; }
+    #timer { font-variant-numeric: tabular-nums; font-weight: 700; }
+    #status { color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; }
+    #meter { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
     #level { height: 100%; width: 0; background: var(--gold); transition: width 80ms linear; }
+    .controls .icon-btn { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center;
+                          border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 14px; }
+
+    @keyframes glow { from { background: color-mix(in srgb, var(--gold) 38%, transparent); } }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } }
+    @keyframes pulse { 50% { opacity: .35; } }
+
+    /* Phones and narrow tablets: one column, verses become a swipeable chip row */
+    @media (max-width: 760px) {
+      :root { --gap: 10px; }
+      body { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+      h1 { font-size: 21px; }
+      header .subtitle { font-size: 14px; }
+      main { display: flex; flex-direction: column; }
+      #verse-panel { flex: none; }
+      .transcript-wrap { flex: 1; }
+      #verse-panel { background: none; border: none; box-shadow: none; border-radius: 0; overflow: visible; }
+      #verse-panel .head { display: none; }
+      #verse-panel:has(li.placeholder) { display: none; }
+      #verse-list { display: flex; gap: 8px; padding: 2px 0 4px; overflow-x: auto; overflow-y: hidden;
+                    scrollbar-width: none; scroll-snap-type: x proximity; }
+      #verse-list::-webkit-scrollbar { display: none; }
+      #verse-list li { flex: none; scroll-snap-align: start; background: var(--panel); border: 1px solid var(--border); border-radius: 999px; }
+      #verse-list li.current { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 18%, var(--panel)); }
+      #verse-list .ref { padding: 7px 14px; font-size: 15px; }
+      #verse-list .time, #verse-list .out { display: none; }
+      #scripture { padding: 12px 14px 12px 16px; max-height: 32dvh; }
+      #scripture-ref { font-size: 19px; }
+      #scripture-link { font-size: 14px; }
+      #scripture-text { font-size: 18px; }
+      #transcript { padding: 14px 16px; font-size: 19px; }
+      .controls { gap: 10px; padding-top: 10px; }
+      #mic { min-width: 0; padding: 0 20px; height: 54px; }
+      .controls .icon-btn { width: 46px; height: 46px; }
+    }
+    @media (max-width: 380px) {
+      header .subtitle { display: none; }
+      #mic { padding: 0 16px; }
+      #mic .label { display: none; }
+      #mic { width: 54px; padding: 0; }
+    }
+    /* Phones held sideways: very little height, so tighten everything */
+    @media (max-height: 500px) {
+      :root { --gap: 8px; }
+      body { padding-top: calc(env(safe-area-inset-top) + 6px); }
+      header .subtitle { display: none; }
+      h1 { font-size: 18px; }
+      #scripture { max-height: 38dvh; padding-top: 8px; padding-bottom: 8px; }
+      #scripture-text { font-size: 17px; }
+      .controls { padding-top: 6px; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+      #mic { height: 46px; }
+      .controls .icon-btn { width: 42px; height: 42px; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1><span class="cross">&#10013;</span>Live Sermon Transcription</h1>
-    <span id="status">Idle</span>
+    <h1><span class="cross">&#10013;</span>BibleFlip</h1>
+    <span class="subtitle">Live sermon transcription</span>
   </header>
 
   <section id="scripture" class="panel" aria-live="polite" hidden>
     <div class="head">
       <h2 id="scripture-ref"></h2>
       <span class="translation">KJV</span>
-      <a id="scripture-link" target="_blank" rel="noopener">Read in NKJV &#8599;</a>
+      <a id="scripture-link" target="_blank" rel="noopener">NKJV &#8599;</a>
+      <button id="scripture-close" class="icon-btn" aria-label="Hide verse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
     <div id="scripture-text"></div>
   </section>
@@ -138,17 +216,35 @@
       </ol>
     </aside>
 
-    <div id="transcript" class="panel" aria-live="polite">
-      <p class="placeholder">Press <b>Start talking</b> and speak English. Text appears as you speak.</p>
+    <div class="transcript-wrap">
+      <div id="transcript" class="panel" aria-live="polite">
+        <p class="placeholder">Tap <b>Start</b> and speak. Say a verse like &ldquo;John 3:16&rdquo; and it appears above.</p>
+      </div>
+      <button id="jump-live" hidden>&darr; Live</button>
     </div>
   </main>
 
-  <div class="controls">
-    <button id="mic">Start talking</button>
-    <div id="meter"><div id="level"></div></div>
-    <button id="copy">Copy</button>
-    <button id="clear">Clear</button>
-  </div>
+  <footer class="controls">
+    <button id="mic" aria-label="Start recording">
+      <svg class="when-idle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg>
+      <svg class="when-live" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      <span class="label">Start</span>
+    </button>
+    <div class="rec-info">
+      <div class="rec-row">
+        <span class="rec-dot"></span>
+        <span id="timer">0:00</span>
+        <span id="status">Idle</span>
+      </div>
+      <div id="meter"><div id="level"></div></div>
+    </div>
+    <button id="copy" class="icon-btn" aria-label="Copy transcript" title="Copy transcript">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+    </button>
+    <button id="clear" class="icon-btn" aria-label="Clear transcript" title="Clear transcript">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+    </button>
+  </footer>
 
   <script src="/static/verses.js"></script>
   <script src="/static/app.js"></script>
